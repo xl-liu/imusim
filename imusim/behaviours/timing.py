@@ -21,7 +21,7 @@ from abc import ABC, abstractmethod
 from imusim.platforms.timers import Timer
 from imusim.simulation.base import Simulation
 from imusim.utilities.documentation import prepend_method_doc
-import SimPy.Simulation
+import simpy
 import numpy as np
 
 

@@ -23,7 +23,7 @@ from imusim.simulation.base import Simulation
 from imusim.platforms.base import Component
 from imusim.platforms.sensors import Sensor
 from imusim.utilities.documentation import prepend_method_doc
-import SimPy.Simulation
+import simpy
 import numpy as np
 
 class ADC(Component):
@@ -114,9 +114,9 @@ class ParametricADC(QuantisingADC):
         QuantisingADC.__init__(self, platform, bits, vref)
         self._sampleDelay = sampleDelay
 
-    class _SampleProcess(SimPy.Simulation.Process):
+    class _SampleProcess(simpy.Environment.process):
         def __init__(self, adc, callback, *sensors):
-            SimPy.Simulation.Process.__init__(self,
+            simpy.Environment.process.__init__(self,
                     sim=adc.platform.simulation.engine)
             self.adc = adc
             self.callback = callback
@@ -128,7 +128,7 @@ class ParametricADC(QuantisingADC):
             for sensor in self.sensors:
                 voltages = np.empty((3, 1))
                 for axis in [0,1,2]:
-                    yield SimPy.Simulation.hold, self, self.adc._sampleDelay
+                    yield simpy.Environment.timeout(self.adc._sampleDelay)
                     voltages[axis] = sensor.voltages(
                             self.adc.platform.simulation.time)[axis]
                 data.append(self.adc.transferFunction(voltages))

@@ -23,7 +23,7 @@ from abc import abstractmethod
 from imusim.platforms.base import Component
 from imusim.simulation.base import Simulation
 from imusim.utilities.documentation import prepend_method_doc
-import SimPy.Simulation
+import simpy
 import numpy as np
 
 
@@ -37,17 +37,16 @@ class Timer(Component):
         self._process = None
         Component.__init__(self, platform)
 
-    class _TimerProcess(SimPy.Simulation.Process):
+    class _TimerProcess(simpy.Environment.process):
         def __init__(self, timer):
             self.timer = timer
-            SimPy.Simulation.Process.__init__(self,
-                    sim=self.timer.platform.simulation.engine)
-            self._lastTime = self.sim.now()
-            self.sim.activate(self, self.eventLoop())
+            self.sim = self.timer.platform.simulation.engine
+            self._lastTime = self.sim.now
+            self.sim.process(self.eventLoop())
 
         def eventLoop(self):
             while True:
-                yield SimPy.Simulation.hold, self, self.timer._period
+                yield self.sim.timeout(self.timer._period)
                 if self.timer._process is self:
                     if self.timer.callback is not None:
                         self.timer.callback()

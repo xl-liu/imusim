@@ -18,7 +18,7 @@ Simulation engine for IMUSim.
 # You should have received a copy of the GNU General Public License
 # along with IMUSim.  If not, see <http://www.gnu.org/licenses/>.
 
-import SimPy.Simulation
+import simpy
 import numpy as np
 import time
 
@@ -35,7 +35,7 @@ class Simulation(object):
     """
 
     def __init__(self, seed=None, environment=None,
-            engine=SimPy.Simulation.Simulation):
+            engine=simpy.Environment):
         """
         Initialise simulation.
 
@@ -45,35 +45,34 @@ class Simulation(object):
         """
         self.environment = Environment() if environment is None else environment
         self.engine = engine()
-        self.engine.initialize()
         self.rng = np.random.RandomState(seed)
 
     @property
     def time(self):
         """ The current true time within the simulation (float). """
         assert hasattr(self, '_startTime'), 'Simulation time has not been set.'
-        return self.engine.now() + self._startTime
+        return self.engine.now + self._startTime
 
     @time.setter
     def time(self, time):
         assert not hasattr(self, '_startTime'), 'Simulation time already set.'
         self._startTime = time
 
-    class ProgressMonitor(SimPy.Simulation.Process):
+    class ProgressMonitor(simpy.Environment.process):
         """
         Simple process to print status and remaining simulation time at 5%
         progress intervals.
         """
         def __init__(self, sim, duration):
-            SimPy.Simulation.Process.__init__(self, sim=sim)
-            self.startTime = sim.now()
+            simpy.Environment().process.__init__(self, sim=sim)
+            self.startTime = sim.now
             self.duration = duration
-            sim.activate(self, self.printProgress())
+            # sim.run(self, self.printProgress())
 
         def printProgress(self):
             for i in range(0,20):
                 start = time.time()
-                yield SimPy.Simulation.hold, self, self.duration / 20.0
+                yield simpy.Environment.timeout(self.duration / 20.0)
                 now = self.sim.now() - self.startTime
                 end = time.time()
 
@@ -96,7 +95,7 @@ class Simulation(object):
             progressMonitor = self.ProgressMonitor(self.engine, duration)
 
         startWallTime = time.time()
-        self.engine.simulate(endTime - self._startTime)
+        self.engine.run(endTime - self._startTime)
         endWallTime = time.time()
 
         if printProgress:

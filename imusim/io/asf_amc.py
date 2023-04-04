@@ -49,7 +49,7 @@ class ASFBone(TreeNode):
         self.rotationOffset = Quaternion.fromEuler(axis, rotOrder).conjugate
         self.childoffset = self.rotationOffset.rotateVector(
                 vector(*bonedata.direction) * bonedata.length * scale)
-        self.isDummy = bonedata.channels is ''
+        self.isDummy = bonedata.channels == ''
         self.channels = bonedata.channels
 
 class ASFRoot(ASFBone):
